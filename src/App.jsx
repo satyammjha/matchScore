@@ -1,12 +1,12 @@
 import React from 'react';
 import './index.css';
-import ProcessResume from './ProcessResume';
+import PDFParserReact from './components/ui/file-upload';
 
 function App() {
 
   return (
     <div className="App">
-    <ProcessResume />
+      <PDFParserReact />
     </div>
   );
 }
