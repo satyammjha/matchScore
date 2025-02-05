@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as pdfjsLib from "pdfjs-dist/build/pdf";
 import "pdfjs-dist/build/pdf.worker.mjs";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -9,7 +9,31 @@ function PDFParserReact() {
     const [skills, setSkills] = useState([]);
     const [processingSkills, setProcessingSkills] = useState(false);
 
-    const genAI = new GoogleGenerativeAI();
+    const genAI = new GoogleGenerativeAI('AIzaSyAx4bapGjEdXuwlAgRwpK2jda5Cmklf5rw');
+
+    useEffect(() => {
+        const savedPdf = localStorage.getItem("currentPdf");
+        const savedSkills = localStorage.getItem("skills");
+
+        if (savedPdf) {
+            setCurrentPdf(JSON.parse(savedPdf));
+        }
+        if (savedSkills) {
+            setSkills(JSON.parse(savedSkills));
+        }
+    }, []);
+
+    useEffect(() => {
+        if (currentPdf) {
+            localStorage.setItem("currentPdf", JSON.stringify(currentPdf));
+        }
+    }, [currentPdf]);
+
+    useEffect(() => {
+        if (skills.length > 0) {
+            localStorage.setItem("skills", JSON.stringify(skills));
+        }
+    }, [skills]);
 
     const extractText = async (event) => {
         const file = event.target.files[0];
@@ -32,20 +56,18 @@ function PDFParserReact() {
                     extractedText += textContent.items.map((item) => item.str).join(" ") + "\n";
                 }
 
-                setCurrentPdf({
+                const newPdf = {
                     id: Date.now(),
                     name: file.name,
                     text: extractedText || "No text found in the PDF",
                     date: new Date().toLocaleString()
-                });
-
+                };
+                setCurrentPdf(newPdf);
                 const model = genAI.getGenerativeModel({ model: "gemini-pro" });
                 const prompt = `Extract technical skills from this resume text as a comma-separated list. Return only the top 10 skills based on the current industry trends and should be maximum of 10 skills only, nothing else: ${extractedText}`;
-                
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
                 const skillsList = response.text().split(',').map(skill => skill.trim());
-                
                 setSkills(skillsList);
             } catch (error) {
                 console.error("Error:", error);
@@ -56,15 +78,14 @@ function PDFParserReact() {
                 event.target.value = "";
             }
         };
-
         reader.readAsArrayBuffer(file);
     };
-
     const deletePdf = () => {
         setCurrentPdf(null);
         setSkills([]);
+        localStorage.removeItem("currentPdf");
+        localStorage.removeItem("skills");
     };
-
     return (
         <div className="max-w-md min-w-[400px] min-h-[500px] p-5 bg-gray-50">
             <header className="text-center mb-5">
@@ -77,8 +98,8 @@ function PDFParserReact() {
             {!currentPdf ? (
                 <div className="mb-5 text-center">
                     <label className={`inline-block px-4 py-2 rounded-md cursor-pointer transition-colors
-                        ${isLoading ? 
-                            'bg-gray-400 cursor-not-allowed' : 
+                        ${isLoading ?
+                            'bg-gray-400 cursor-not-allowed' :
                             'bg-blue-600 hover:bg-blue-700 text-white'}`}>
                         <input
                             type="file"
@@ -123,7 +144,7 @@ function PDFParserReact() {
                                 <div className="text-sm text-gray-500">Analyzing skills...</div>
                             ) : (
                                 skills.map((skill, index) => (
-                                    <div 
+                                    <div
                                         key={index}
                                         className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full"
                                     >

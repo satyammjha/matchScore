@@ -3,10 +3,13 @@
     "name": "PDF Text Extractor",
     "version": "1.0",
     "description": "Extract text from PDFs using a Chrome extension",
-    "permissions": ["storage"],
-    "host_permissions": ["<all_urls>"],
+    "permissions": [
+        "storage"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
     "action": {
         "default_popup": "index.html"
-        
     }
 }
